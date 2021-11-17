@@ -9,6 +9,8 @@ import '../screens/train_route_screen.dart';
 import '../utility/utility.dart';
 
 class TrainListScreen extends StatefulWidget {
+  const TrainListScreen({Key? key}) : super(key: key);
+
   @override
   _TrainListScreenState createState() => _TrainListScreenState();
 }
@@ -20,7 +22,9 @@ class _TrainListScreenState extends State<TrainListScreen> {
 
   bool _isLoading = false;
 
-  Utility _utility = Utility();
+  final Utility _utility = Utility();
+
+  final List<String> _selectedList = [];
 
   /// 初期動作
   @override
@@ -54,10 +58,20 @@ class _TrainListScreenState extends State<TrainListScreen> {
           _utility.getBackGround(context: context),
           Column(
             children: [
-              SizedBox(
+              const SizedBox(
                 height: 40,
               ),
               _trainList(context, _trainListData),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => _goTrainRouteScreen(),
+                  child: const Text('google map'),
+                  style: ElevatedButton.styleFrom(
+                    primary: Colors.pinkAccent.withOpacity(0.8),
+                  ),
+                ),
+              ),
             ],
           ),
         ],
@@ -75,16 +89,15 @@ class _TrainListScreenState extends State<TrainListScreen> {
               child: ListView.separated(
                 itemBuilder: (context, index) {
                   return Card(
-                    color: Colors.black.withOpacity(0.3),
+                    color: _getSelectedBgColor(
+                        trainNumber: _trainListData[index].trainNumber),
                     child: ListTile(
                       title: DefaultTextStyle(
-                        style: TextStyle(fontSize: 12),
+                        style: const TextStyle(fontSize: 12),
                         child: Text(_trainListData[index].trainName),
                       ),
-                      onTap: () => _goTrainRouteScreen(
-                        train_name: _trainListData[index].trainName,
-                        train_number: _trainListData[index].trainNumber,
-                      ),
+                      onTap: () => _addSelectedAry(
+                          trainNumber: _trainListData[index].trainNumber),
                     ),
                   );
                 },
@@ -99,19 +112,39 @@ class _TrainListScreenState extends State<TrainListScreen> {
     );
   }
 
+  ///
+  void _addSelectedAry({trainNumber}) {
+    if (_selectedList.contains(trainNumber)) {
+      _selectedList.remove(trainNumber);
+    } else {
+      _selectedList.add(trainNumber);
+    }
+
+    setState(() {});
+  }
+
+  ///
+  Color _getSelectedBgColor({trainNumber}) {
+    if (_selectedList.contains(trainNumber)) {
+      return Colors.greenAccent.withOpacity(0.3);
+    } else {
+      return Colors.black.withOpacity(0.3);
+    }
+  }
+
   ////////////////////////
 
   ///
-  void _goTrainRouteScreen(
-      {required String train_name, required String train_number}) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => TrainRouteScreen(
-          train_name: train_name,
-          train_number: train_number,
+  void _goTrainRouteScreen() {
+    if (_selectedList.isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TrainRouteScreen(
+            trainNumberList: _selectedList,
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 }

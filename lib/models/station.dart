@@ -30,18 +30,21 @@ class Eki {
     required this.address,
     required this.lat,
     required this.lng,
+    required this.lineNumber,
   });
 
   String stationName;
   String address;
   String lat;
   String lng;
+  int lineNumber;
 
   factory Eki.fromJson(Map<String, dynamic> json) => Eki(
         stationName: json["station_name"],
         address: json["address"],
         lat: json["lat"],
         lng: json["lng"],
+        lineNumber: json["line_number"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -49,5 +52,6 @@ class Eki {
         "address": address,
         "lat": lat,
         "lng": lng,
+        "line_number": lineNumber,
       };
 }

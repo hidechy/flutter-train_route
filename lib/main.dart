@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Train Route',
       theme: ThemeData(brightness: Brightness.dark),
-      home: TrainListScreen(),
+      home: const TrainListScreen(),
       debugShowCheckedModeBanner: false,
     );
   }

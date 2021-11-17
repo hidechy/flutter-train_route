@@ -1,3 +1,5 @@
+// ignore_for_file: use_key_in_widget_constructors, non_constant_identifier_names
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart';
@@ -7,10 +9,9 @@ import 'dart:convert';
 import '../models/station.dart';
 
 class TrainRouteScreen extends StatefulWidget {
-  final String train_name;
-  final String train_number;
+  final List<String> trainNumberList;
 
-  TrainRouteScreen({required this.train_name, required this.train_number});
+  const TrainRouteScreen({required this.trainNumberList});
 
   @override
   _TrainRouteScreenState createState() => _TrainRouteScreenState();
@@ -21,9 +22,9 @@ class _TrainRouteScreenState extends State<TrainRouteScreen> {
 
   Map<String, String> headers = {'content-type': 'application/json'};
 
-  List<Eki> _stationListData = [];
+  final Set<Marker> _markerSets = {};
 
-  Set<Marker> _markerSets = {};
+  final List<Eki> _ekiList = [];
 
   /// 初期動作
   @override
@@ -36,12 +37,17 @@ class _TrainRouteScreenState extends State<TrainRouteScreen> {
   /// 初期データ作成
   void _makeDefaultDisplayData() async {
     ///////////////////////////////////
-    String url = "http://toyohide.work/BrainLog/api/getTrainStation";
-    String body = json.encode({"train_number": widget.train_number});
-    Response response =
-        await post(Uri.parse(url), headers: headers, body: body);
-    final station = stationFromJson(response.body);
-    _stationListData = station.data;
+    for (var i = 0; i < widget.trainNumberList.length; i++) {
+      String url = "http://toyohide.work/BrainLog/api/getTrainStation";
+      String body = json.encode({"train_number": widget.trainNumberList[i]});
+      Response response =
+          await post(Uri.parse(url), headers: headers, body: body);
+      final station = stationFromJson(response.body);
+      for (var j = 0; j < station.data.length; j++) {
+        station.data[j].lineNumber = i;
+        _ekiList.add(station.data[j]);
+      }
+    }
     ///////////////////////////////////
 
     setState(() {});
@@ -50,31 +56,32 @@ class _TrainRouteScreenState extends State<TrainRouteScreen> {
   ///
   @override
   Widget build(BuildContext context) {
-    _latLng = LatLng(35.7102009, 139.9490672);
+    _latLng = const LatLng(35.7102009, 139.9490672);
 
     CameraPosition _initialCameraPosition =
         CameraPosition(target: _latLng, zoom: 11);
 
-    for (var i = 0; i < _stationListData.length; i++) {
+    for (var i = 0; i < _ekiList.length; i++) {
       _markerSets.add(
         Marker(
-          markerId: MarkerId('id-${i}'),
+          markerId: MarkerId('id-$i'),
           position: LatLng(
-            double.parse(_stationListData[i].lat),
-            double.parse(_stationListData[i].lng),
+            double.parse(_ekiList[i].lat),
+            double.parse(_ekiList[i].lng),
           ),
           infoWindow: InfoWindow(
-            title: _stationListData[i].stationName,
-            snippet: _stationListData[i].address,
+            title: _ekiList[i].stationName,
+            snippet: _ekiList[i].address,
           ),
+          icon: _getMapIcon(line_number: _ekiList[i].lineNumber),
         ),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          widget.train_name,
+        title: const Text(
+          'train route',
           style: TextStyle(fontSize: 12),
         ),
 
@@ -106,5 +113,30 @@ class _TrainRouteScreenState extends State<TrainRouteScreen> {
         ],
       ),
     );
+  }
+
+  ///
+  BitmapDescriptor _getMapIcon({required int line_number}) {
+    switch (line_number) {
+      case 0:
+        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
+
+      case 1:
+        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue);
+
+      case 2:
+        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
+
+      case 3:
+        return BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueOrange);
+
+      case 4:
+        return BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueViolet);
+
+      default:
+        return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
+    }
   }
 }
